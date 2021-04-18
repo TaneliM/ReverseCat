@@ -4,40 +4,45 @@
 
 #define MAXLEN 1024
 
+
+// List node struct
 struct lines
 {
-	char * string;
+	char* string;
 	struct lines * prev;
 	struct lines * next;
 };
 
-int read_lines(struct lines ** line, FILE * stream)
-{
+
+// Reading input to the list
+int read_lines(struct lines** line, FILE* stream) {
 	char tmp[MAXLEN];
-	struct lines * lp;
+	struct lines* lp;
 	
 	while (fgets(tmp, MAXLEN, stream) != NULL) {
 		
 		if (*line == NULL) {
 			if ((*line = lp = malloc(sizeof(struct lines))) == NULL) {
-				fprintf(stderr, "ERROR: could not allocate memory\n");
+				fprintf(stderr, "Malloc failed.\n");
 				return -1;
 			}
+			
 			lp->prev = lp->next = NULL;
-		} else {
+			
+		}
+		else {
 			if ( (lp->next = malloc(sizeof(struct lines))) == NULL) {
-				fprintf(stderr, "ERROR: could not allocate memory\n");
+				fprintf(stderr, "Malloc failed.\n");
 				return -1;
 			}
 
-			/* Here you should insert the lines that link the list correctly */
 			lp->next->prev = lp;
 			lp = lp->next;
 			
 		}
 		
 		if ( (lp->string = malloc(strlen(tmp) + 1)) == NULL) {
-			fprintf(stderr, "ERROR: could not allocate memory\n");
+			fprintf(stderr, "Malloc failed.\n");
 			return -1;
 		}
 		strcpy(lp->string, tmp);
@@ -46,29 +51,30 @@ int read_lines(struct lines ** line, FILE * stream)
 	return 0;
 }
 
-void print_lines(struct lines * line, FILE * stream)
-{
+
+// Printing the list in reverce
+void print_lines(struct lines * line, FILE * stream) {
 	struct lines * lp;
-	
-	/* Here you should implement a loop that prints the lines in reverse order. 	*/
-	/* First you need to follow the links from the first node to the last node.	*/ 
 	lp = line;
 	
+	// Going through the linked list to find the last node
 	while (lp->next != NULL) {
 		lp = lp->next;
 	}
+	// Writing the list to the "stream" in reverse
 	while (lp != NULL) {
 		fprintf(stream, "%s", lp->string);
 		lp = lp->prev;
 	}
-	
 }
 
-void delete_lines(struct lines * line)
-{
+
+// Deleting the linked list
+void delete_lines(struct lines * line) {
 	struct lines * lp;
-	
 	lp = line;
+	
+	// Freeing allocated memory
 	while (lp != NULL) {
 		line = lp->next;
 		free(lp->string);
@@ -77,14 +83,48 @@ void delete_lines(struct lines * line)
 	}
 }
 
-int main(void)
-{
+
+// Handling the arguments
+int main(int argc, char** argv) {
 	struct lines * line = NULL;
+	FILE* input = stdin;
+	FILE* output = stdout;
 	
-	if (read_lines(&line, stdin) == -1)
+	// Chenking argument count
+	if (argc > 3) {
+		fprintf(stderr, "usage: reverse <input> <output>");
 		exit(1);
-	print_lines(line, stdout);
-	delete_lines(line);
+	}
 	
+	// Using input file if specified
+	if (argc > 1) {
+		if ((input = fopen(("%s", argv[1]), "r")) == NULL) {
+			fprintf(stderr, "error: Cannot open file '%s'., argv[1]\n");
+			exit(1);
+		}
+	}
+	
+	// Using output file is specified
+	if (argc > 2) {
+		if (strcmp(argv[1], argv[2]) == 0) {
+			fprintf(stderr, "Input and output files must differ.\n");
+			exit(1);
+		}
+		
+		if ((output = fopen(("%s", argv[2]), "w")) == NULL) {
+			fprintf(stderr, "error: Cannot open file '%s'.\n", argv[2]);
+			exit(1);
+		}
+	}
+	
+	if (read_lines(&line, input) == -1)
+		exit(1);
+		
+	print_lines(line, output);
+	delete_lines(line);
+	fclose(input);
+	fclose(output);
 	return 0;
 }
+
+
