@@ -99,7 +99,7 @@ int main(int argc, char** argv) {
 	// Using input file if specified
 	if (argc > 1) {
 		if ((input = fopen(("%s", argv[1]), "r")) == NULL) {
-			fprintf(stderr, "error: Cannot open file '%s'., argv[1]\n");
+			fprintf(stderr, "error: Cannot open file '%s'.\n", argv[1]);
 			exit(1);
 		}
 	}
