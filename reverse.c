@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <libgen.h>
 
-#define MAXLEN 1024
-
+#define MAX_PATH 4096
 
 // List node struct
 struct lines
@@ -16,38 +16,44 @@ struct lines
 
 // Reading input to the list
 int read_lines(struct lines** line, FILE* stream) {
-	char tmp[MAXLEN];
+	
+	char* buffer = NULL;
+	size_t n = 0;
 	struct lines* lp;
 	
-	while (fgets(tmp, MAXLEN, stream) != NULL) {
+	// reading input stream line by line
+	while (getline(&buffer, &n , stream) >= 0) {
+		if (buffer == NULL) {
+			fprintf(stderr, "getline failed\n");
+		}
 		
-		if (*line == NULL) {
+		// Allocating memory for the first node
+		if (*line == NULL) { 
 			if ((*line = lp = malloc(sizeof(struct lines))) == NULL) {
-				fprintf(stderr, "Malloc failed.\n");
+				fprintf(stderr, "malloc failed\n");
 				return -1;
 			}
 			
 			lp->prev = lp->next = NULL;
-			
 		}
-		else {
+		// Allocating memory for a new node
+		else { 
 			if ( (lp->next = malloc(sizeof(struct lines))) == NULL) {
-				fprintf(stderr, "Malloc failed.\n");
+				fprintf(stderr, "malloc failed\n");
 				return -1;
 			}
 
 			lp->next->prev = lp;
 			lp = lp->next;
-			
 		}
 		
-		if ( (lp->string = malloc(strlen(tmp) + 1)) == NULL) {
-			fprintf(stderr, "Malloc failed.\n");
+		// Allocating memory for the line to store it in the list
+		if ( (lp->string = malloc(strlen(buffer) + 1)) == NULL) {
+			fprintf(stderr, "malloc failed\n");
 			return -1;
 		}
-		strcpy(lp->string, tmp);
+		strcpy(lp->string, buffer);
 	}
-	
 	return 0;
 }
 
@@ -87,43 +93,49 @@ void delete_lines(struct lines * line) {
 // Handling the arguments
 int main(int argc, char** argv) {
 	struct lines * line = NULL;
-	FILE* input = stdin;
-	FILE* output = stdout;
+	char *inputFile, *outputFile;
+	char inputFilePath[MAX_PATH], outputFilePath[MAX_PATH];
+	FILE* inputStream = stdin;
+	FILE* outputStream = stdout;
 	
-	// Chenking argument count
+	// Checking if argument count is correct
 	if (argc > 3) {
-		fprintf(stderr, "usage: reverse <input> <output>");
+		fprintf(stderr, "usage: reverse <input> <output>\n");
 		exit(1);
 	}
 	
-	// Using input file if specified
-	if (argc > 1) {
-		if ((input = fopen(("%s", argv[1]), "r")) == NULL) {
-			fprintf(stderr, "error: Cannot open file '%s'.\n", argv[1]);
+	// Use input file if specified
+	if (argc > 1) {	
+		if (((inputFile = realpath(argv[1], inputFilePath)) == NULL) || ((inputStream = fopen(("%s", argv[1]), "r")) == NULL)) {
+			fprintf(stderr, "reverse: cannot open file '%s'\n", argv[1]);
 			exit(1);
 		}
 	}
 	
-	// Using output file is specified
+	// Use or create output file if specified
 	if (argc > 2) {
-		if (strcmp(argv[1], argv[2]) == 0) {
-			fprintf(stderr, "Input and output files must differ.\n");
+		outputFile = realpath(argv[2], outputFilePath);
+		
+		if (strcmp(basename(inputFile), basename(outputFile)) == 0) {
+			fprintf(stderr, "reverse: input and output file must differ\n");
 			exit(1);
 		}
 		
-		if ((output = fopen(("%s", argv[2]), "w")) == NULL) {
-			fprintf(stderr, "error: Cannot open file '%s'.\n", argv[2]);
+		if ((outputStream = fopen(("%s", argv[2]), "w+")) == NULL) {
+			fprintf(stderr, "reverse: cannot open file '%s'\n", argv[2]);
 			exit(1);
 		}
 	}
 	
-	if (read_lines(&line, input) == -1)
+	if (read_lines(&line, inputStream) == -1) {
 		exit(1);
+	}
 		
-	print_lines(line, output);
+	print_lines(line, outputStream);
 	delete_lines(line);
-	fclose(input);
-	fclose(output);
+	fclose(inputStream);
+	fclose(outputStream);
+	
 	return 0;
 }
 
