@@ -54,6 +54,7 @@ int read_lines(struct lines** line, FILE* stream) {
 		}
 		strcpy(lp->string, buffer);
 	}
+	free(buffer);
 	return 0;
 }
 
@@ -106,7 +107,7 @@ int main(int argc, char** argv) {
 	
 	// Use input file if specified
 	if (argc > 1) {	
-		if (((inputFile = realpath(argv[1], inputFilePath)) == NULL) || ((inputStream = fopen(("%s", argv[1]), "r")) == NULL)) {
+		if (((inputFile = realpath(argv[1], inputFilePath)) == NULL) || ((inputStream = fopen(argv[1], "r")) == NULL)) {
 			fprintf(stderr, "reverse: cannot open file '%s'\n", argv[1]);
 			exit(1);
 		}
@@ -121,7 +122,7 @@ int main(int argc, char** argv) {
 			exit(1);
 		}
 		
-		if ((outputStream = fopen(("%s", argv[2]), "w+")) == NULL) {
+		if ((outputStream = fopen(argv[2], "w+")) == NULL) {
 			fprintf(stderr, "reverse: cannot open file '%s'\n", argv[2]);
 			exit(1);
 		}
