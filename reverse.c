@@ -21,10 +21,11 @@ int read_lines(struct lines** line, FILE* stream) {
 	size_t n = 0;
 	struct lines* lp;
 	
-	// reading input stream line by line
+	// Reading input stream line by line
 	while (getline(&buffer, &n , stream) >= 0) {
 		if (buffer == NULL) {
 			fprintf(stderr, "getline failed\n");
+			return -1;
 		}
 		
 		// Allocating memory for the first node
@@ -42,7 +43,8 @@ int read_lines(struct lines** line, FILE* stream) {
 				fprintf(stderr, "malloc failed\n");
 				return -1;
 			}
-
+			
+			lp->next->next = lp->next->prev = NULL;
 			lp->next->prev = lp;
 			lp = lp->next;
 		}
